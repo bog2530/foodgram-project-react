@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'djoser',
     'foodgram',
+    'recipes',
     'users',
     'api',
 ]
