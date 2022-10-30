@@ -8,9 +8,8 @@ class Ingredient(models.Model):
     name = models.CharField(
         'Название',
         max_length=254,
-        unique=True,
     )
-    units_measure = models.CharField(
+    measurement_unit = models.CharField(
         'Единицы измерения',
         max_length=254,
     )
@@ -31,8 +30,8 @@ class Tag(models.Model):
     )
     color = models.CharField(
         'Цвет',
-        unique=True,
         max_length=16,
+        unique=True,
     )
     slug = models.CharField(
         'Слаг',
@@ -75,12 +74,13 @@ class Recipe(models.Model):
         verbose_name='Теги',
         related_name='recipes'
     )
-    time = models.TimeField()
+    cooking_time = models.IntegerField()
 
 
 class CounterIngredient(models.Model):
-    quantity = models.IntegerField(
+    amount = models.IntegerField(
         'Количество',
+        default=1
     )
     ingredient = models.ForeignKey(
         Ingredient,
@@ -126,7 +126,7 @@ class ShoppingList(models.Model):
         return self.recipe
 
 
-class Favorites(models.Model):
+class Favorite(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,

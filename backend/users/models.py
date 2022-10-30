@@ -4,9 +4,13 @@ from django.db import models
 
 class User(AbstractUser):
     email = models.EmailField(
-        'Email',
+        'Адрес электронной почты',
         max_length=254,
         unique=True,
+    )
+    username = models.CharField(
+        'Уникальный юзернейм',
+        max_length=150,
     )
     first_name = models.CharField(
         'Имя',
@@ -31,12 +35,12 @@ class Subscription(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='subscriptions',
+        related_name='follower',
     )
-    author = models.ForeignKey(
+    following = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='subscriber'
+        related_name='following',
     )
 
     class Meta:
@@ -44,10 +48,7 @@ class Subscription(models.Model):
         verbose_name_plural = 'Подписки'
         constraints = [
             models.UniqueConstraint(
-                fields=[
-                    'user',
-                    'author',
-                ],
-                name='unique_subscribe',
-            )
+                fields=['user', 'following',],
+                name='unique_follower',
+            ),
         ]

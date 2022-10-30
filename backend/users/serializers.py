@@ -1,12 +1,16 @@
 from django.contrib.auth import get_user_model
 from djoser.serializers import UserSerializer
-from django.db import models
+from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
+
+from .models import Subscription
+from recipes.models import Recipe
 
 User = get_user_model()
 
 
 class CustomUserSerializer(UserSerializer):
-    # is_subscribed = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -16,28 +20,55 @@ class CustomUserSerializer(UserSerializer):
             'username',
             'first_name',
             'last_name',
-            # 'is_subscribed',
+            'is_subscribed',
         )
-        # read_only_fields = ('is_subscribed',)
 
-        # def get_is_subscribed(self):
-        #     ...
+    def get_is_subscribed(self, obj):
+        user = self.context['request'].user
+        if user.is_anonymous:
+            return False
+        return Subscription.objects.filter(
+            user=user.id,
+            following=obj.id,).exists()
 
 
-class Follow(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='follower',
-    )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='following',
-    )
-
+class ShowRecipeSerializers(serializers.ModelSerializer):
     class Meta:
-        constraints = (models.UniqueConstraint(
-            fields=['user', 'author'],
-            name='unique_follower',
-        ),)
+        model = Recipe
+        fields = [
+            'id',
+            'name',
+            "image",
+            'cooking_time',
+        ]
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subscription
+        fields = [
+            'user',
+            'following',
+        ]
+
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Subscription.objects.all(),
+                fields=('user', 'following'))]
+
+
+class SubscriptionShowSerializers(CustomUserSerializer):
+    recipes = ShowRecipeSerializers(
+        many=True,
+        read_only=True,
+    )
+    recipes_count = serializers.SerializerMethodField(read_only=True)
+
+    class Meta(CustomUserSerializer.Meta):
+        fields = CustomUserSerializer.Meta.fields + (
+            'recipes',
+            'recipes_count',
+        )
+
+    def get_recipes_count(self, obj):
+        return obj.recipes.count()
