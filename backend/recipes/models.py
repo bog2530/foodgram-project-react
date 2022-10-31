@@ -80,7 +80,6 @@ class Recipe(models.Model):
 class CounterIngredient(models.Model):
     amount = models.IntegerField(
         'Количество',
-        default=1
     )
     ingredient = models.ForeignKey(
         Ingredient,

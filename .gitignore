@@ -133,3 +133,7 @@ dmypy.json
 
 #MacOs
 .DS_Store
+
+#Media
+.png
+.gif

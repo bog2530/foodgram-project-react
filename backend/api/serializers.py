@@ -49,6 +49,13 @@ class CreateCounterIngredientsSerializer(serializers.ModelSerializer):
             'amount',
         ]
 
+    def validate_amount(self, amount):
+        if amount < 1:
+            raise serializers.ValidationError(
+                'Количество ингридиента должно быть больше 0'
+            )
+        return amount
+
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -119,6 +126,18 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                 'Время приготовления должно быть больше 0'
             )
         return cooking_time
+
+    def validate_ingredients(self, ingredients):
+        ingredients_list = []
+        if not ingredients:
+            raise serializers.ValidationError(
+                'Отсутствуют ингридиенты')
+        for ingredient in ingredients:
+            if ingredient['id'] in ingredients_list:
+                raise serializers.ValidationError(
+                    'Ингридиенты должны быть уникальны')
+            ingredients_list.append(ingredient['id'])
+        return ingredients
 
     def add_ingredients(self, ingredients, recipe):
         ingredients_list = []
