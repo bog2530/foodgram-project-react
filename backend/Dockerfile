@@ -2,7 +2,7 @@ FROM python:3.7
 
 WORKDIR /app
 
-COPY .backend/requirements.txt .
+COPY requirements.txt requirements.txt
 
 RUN python -m pip install --upgrade pip
 
