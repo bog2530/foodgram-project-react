@@ -1,8 +1,7 @@
-from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
 from django.contrib.auth import get_user_model
 from rest_framework import (
-    mixins, viewsets, filters, permissions, status, generics,
+    permissions, status, generics,
 )
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -23,7 +22,8 @@ class SubscribeView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        return User.objects.filter(following__user=user)
+        return User.objects.filter(
+            following__user=user,)
 
 
 class SubscribeViewSet(UserViewSet):
@@ -40,23 +40,27 @@ class SubscribeViewSet(UserViewSet):
         following = int(self.kwargs['id'])
         subscribe = Subscription.objects.filter(
             user=user,
-            following=following,)
+            following=following,
+        )
         if request.method == 'DELETE':
             if subscribe.exists():
                 subscribe.delete()
             else:
-                return Response({
-                    'errors': 'Отсутствует подписка'
-                }, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {'errors': 'Отсутствует подписка'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         if request.method == 'POST':
             if user == following:
-                return Response({
-                    'errors': 'Нельзя подписаться на себя!'
-                }, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {'errors': 'Нельзя подписаться на себя!'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             if subscribe.exists():
-                return Response({
-                    'errors': 'Подписка уже оформлена'
-                }, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {'errors': 'Подписка уже оформлена'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             serializer = SubscriptionSerializer(
                 data={'user': user, 'following': following},
                 context={'request': request},)

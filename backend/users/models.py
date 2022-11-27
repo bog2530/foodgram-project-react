@@ -21,7 +21,11 @@ class User(AbstractUser):
         max_length=150,
     )
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
+    REQUIRED_FIELDS = [
+        'username',
+        'first_name',
+        'last_name',
+    ]
 
     class Meta:
         verbose_name = 'Пользователь'
@@ -48,7 +52,10 @@ class Subscription(models.Model):
         verbose_name_plural = 'Подписки'
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'following',],
+                fields=['user', 'following'],
                 name='unique_follower',
             ),
         ]
+
+    def __str__(self):
+        return f'{self.user}, {self.following}'

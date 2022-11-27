@@ -29,40 +29,40 @@ class CustomUserSerializer(UserSerializer):
             return False
         return Subscription.objects.filter(
             user=user.id,
-            following=obj.id,).exists()
+            following=obj.id,
+        ).exists()
 
 
 class ShowRecipeSerializers(serializers.ModelSerializer):
     class Meta:
         model = Recipe
-        fields = [
+        fields = (
             'id',
             'name',
-            "image",
+            'image',
             'cooking_time',
-        ]
+        )
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
-        fields = [
+        fields = (
             'user',
             'following',
-        ]
-
+        )
         validators = [
             UniqueTogetherValidator(
                 queryset=Subscription.objects.all(),
-                fields=('user', 'following'))]
+                fields=('user', 'following'))
+        ]
 
 
 class SubscriptionShowSerializers(CustomUserSerializer):
-    recipes = ShowRecipeSerializers(
-        many=True,
-        read_only=True,
-    )
-    recipes_count = serializers.SerializerMethodField(read_only=True)
+    recipes = serializers.SerializerMethodField(
+        read_only=True)
+    recipes_count = serializers.SerializerMethodField(
+        read_only=True)
 
     class Meta(CustomUserSerializer.Meta):
         fields = CustomUserSerializer.Meta.fields + (
@@ -72,3 +72,19 @@ class SubscriptionShowSerializers(CustomUserSerializer):
 
     def get_recipes_count(self, obj):
         return obj.recipes.count()
+
+    def get_recipes(self, obj):
+        request = self.context.get('request')
+        limit = request.query_params.get('recipes_limit')
+        if limit:
+            recipes = Recipe.objects.filter(
+                author=obj
+            ).all()[:(int(limit))]
+        else:
+            recipes = Recipe.objects.filter(
+                author=obj
+            ).all()
+        context = {'request': request}
+        return ShowRecipeSerializers(
+            recipes, many=True, context=context
+        ).data

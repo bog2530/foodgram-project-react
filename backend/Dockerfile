@@ -1,12 +1,13 @@
-FROM python:3.7-slim
+FROM python:3.7
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY requirements.txt ./
+
+RUN python -m pip install --upgrade pip
 
 RUN pip3 install -r requirements.txt
 
-COPY . .
+COPY . ./
 
-#CMD ["python3", "manage.py", "runserver", "0:8000"]
-CMD ["gunicorn", "backend.wsgi:application", "--bind", "0:8000" ]
+CMD ["gunicorn", "foodgram.wsgi:application", "--bind", "0:8000" ]

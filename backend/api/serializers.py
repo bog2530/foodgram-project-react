@@ -5,7 +5,13 @@ from rest_framework import serializers
 
 from users.serializers import CustomUserSerializer, ShowRecipeSerializers
 from recipes.models import (
-    Ingredient, Tag, Recipe, ShoppingList, Favorite, CounterIngredient,)
+    Ingredient,
+    Tag,
+    Recipe,
+    ShoppingList,
+    Favorite,
+    CounterIngredient,
+)
 
 User = get_user_model()
 
@@ -13,29 +19,35 @@ User = get_user_model()
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
-        fields = [
+        fields = (
             'id',
             'name',
             'measurement_unit',
-        ]
+        )
 
 
 class CounterIngredientsSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(
-        read_only=True, source='ingredient.id')
+        read_only=True,
+        source='ingredient.id',
+    )
     name = serializers.CharField(
-        read_only=True, source='ingredient.name')
+        read_only=True,
+        source='ingredient.name',
+    )
     measurement_unit = serializers.CharField(
-        read_only=True, source='ingredient.measurement_unit')
+        read_only=True,
+        source='ingredient.measurement_unit',
+    )
 
     class Meta:
         model = CounterIngredient
-        fields = [
+        fields = (
             'id',
             'name',
             'measurement_unit',
             'amount',
-        ]
+        )
 
 
 class CreateCounterIngredientsSerializer(serializers.ModelSerializer):
@@ -44,41 +56,49 @@ class CreateCounterIngredientsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CounterIngredient
-        fields = [
+        fields = (
             'id',
             'amount',
-        ]
+        )
 
     def validate_amount(self, amount):
         if amount < 1:
             raise serializers.ValidationError(
-                'Количество ингридиента должно быть больше 0'
-            )
+                'Количество ингридиента должно быть больше 0')
         return amount
 
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
-        fields = [
+        fields = (
             'id',
             'name',
             'color',
             'slug',
-        ]
+        )
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    author = CustomUserSerializer(required=False, read_only=True)
+    author = CustomUserSerializer(
+        required=False,
+        read_only=True
+    )
     ingredients = CounterIngredientsSerializer(
-        many=True, read_only=False, source='counter_ingredient')
-    tags = TagSerializer(read_only=True, many=True)
+        many=True,
+        read_only=False,
+        source='counter_ingredient',
+    )
+    tags = TagSerializer(
+        read_only=True,
+        many=True,
+    )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
-        fields = [
+        fields = (
             'id',
             'author',
             'name',
@@ -89,42 +109,49 @@ class RecipeSerializer(serializers.ModelSerializer):
             'cooking_time',
             'is_favorited',
             'is_in_shopping_cart',
-        ]
+        )
 
     def get_is_favorited(self, obj):
-        user = self.context['request'].user
+        user = self.context['request'].user.id
         return Favorite.objects.filter(
-            recipe=obj.id, user=user.id,).exists()
+            recipe=obj.id,
+            user=user,
+        ).exists()
 
     def get_is_in_shopping_cart(self, obj):
         user = self.context['request'].user.id
         return ShoppingList.objects.filter(
-            user=user, recipe=obj.id,).exists()
+            recipe=obj.id,
+            user=user,
+        ).exists()
 
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
     image = Base64ImageField()
     tags = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Tag.objects.all(),)
+        many=True,
+        queryset=Tag.objects.all(),
+    )
     ingredients = CreateCounterIngredientsSerializer(
-        many=True, source='counter_ingredient',)
+        many=True,
+        source='counter_ingredient',
+    )
 
     class Meta:
         model = Recipe
-        fields = [
+        fields = (
             'name',
             'tags',
             'ingredients',
             'cooking_time',
             'text',
             'image',
-        ]
+        )
 
     def validate_cooking_time(self, cooking_time):
         if cooking_time <= 0:
             raise serializers.ValidationError(
-                'Время приготовления должно быть больше 0'
-            )
+                'Время приготовления должно быть больше 0')
         return cooking_time
 
     def validate_ingredients(self, ingredients):
@@ -163,37 +190,48 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         instance.ingredients.clear()
         instance.tags.set(validated_data.pop('tags'))
         self.add_ingredients(
-            validated_data.pop('counter_ingredient'), instance)
+            validated_data.pop('counter_ingredient'),
+            instance,
+        )
         return super().update(instance, validated_data)
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        ingredients = CounterIngredient.objects.filter(recipe=instance)
+        ingredients = CounterIngredient.objects.filter(
+            recipe=instance)
         representation['ingredients'] = CounterIngredientsSerializer(
-                    ingredients, many=True).data
+            ingredients,
+            many=True
+        ).data
         representation['tags'] = TagSerializer(
-            instance.tags, many=True, required=False
+            instance.tags,
+            many=True,
+            required=False,
         ).data
         return representation
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = [
+        fields = (
             'user',
             'recipe'
-        ]
+        )
         model = Favorite
 
     def to_representation(self, instance):
         request = self.context.get('request')
-        recipe = get_object_or_404(Recipe, id=instance.recipe_id)
+        recipe = get_object_or_404(
+            Recipe,
+            id=instance.recipe_id,
+        )
         representation = ShowRecipeSerializers(
-            recipe, context={'request': request})
+            recipe,
+            context={'request': request},
+        )
         return representation.data
 
 
 class ShoppingListSerializer(FavoriteSerializer):
     class Meta(FavoriteSerializer.Meta):
         model = ShoppingList
-
