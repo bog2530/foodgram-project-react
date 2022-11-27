@@ -1,8 +1,8 @@
-FROM python:3.7
+FROM python:3.7-slim
 
 WORKDIR /app
 
-COPY requirements.txt requirements.txt
+COPY requirements.txt /app
 
 RUN python -m pip install --upgrade pip
 
