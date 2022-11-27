@@ -11,16 +11,15 @@ urlpatterns = [
 ]
 
 schema_view = get_schema_view(
-   openapi.Info(
+    openapi.Info(
        title="BookEng API",
        default_version='v1',
        description="Документация проекта Foodgram",
-       # terms_of_service="URL страницы с пользовательским соглашением",
        contact=openapi.Contact(email="bog2530@gmail.com"),
        license=openapi.License(name="BSD License"),
-   ),
-   public=True,
-   permission_classes=(permissions.AllowAny,),
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
 )
 
 urlpatterns += [
