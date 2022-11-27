@@ -46,7 +46,7 @@ jobs:
           with:
             context: frontend/
             push: true
-            file: backend/Dockerfile
+            file: frontend/Dockerfile
             tags: ${{ secrets.DOCKER_USERNAME }}/foodgram_front:v0.1
 
   deploy:
