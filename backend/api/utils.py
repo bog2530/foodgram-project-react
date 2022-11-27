@@ -4,7 +4,7 @@ from prettytable import PrettyTable
 def table_ricipes(ingredients):
     table = PrettyTable()
     table.field_names = [
-       'Ингридиенты', 'Единицы измерения', 'Количество',
+        'Ингридиенты', 'Единицы измерения', 'Количество',
     ]
     for i in ingredients:
         table.add_row([

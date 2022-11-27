@@ -12,11 +12,11 @@ urlpatterns = [
 
 schema_view = get_schema_view(
     openapi.Info(
-       title="BookEng API",
-       default_version='v1',
-       description="Документация проекта Foodgram",
-       contact=openapi.Contact(email="bog2530@gmail.com"),
-       license=openapi.License(name="BSD License"),
+        title="BookEng API",
+        default_version='v1',
+        description="Документация проекта Foodgram",
+        contact=openapi.Contact(email="bog2530@gmail.com"),
+        license=openapi.License(name="BSD License"),
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
