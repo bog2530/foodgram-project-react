@@ -17,7 +17,13 @@ SECRET_KEY = os.getenv('SECRET_KEY', default='12345')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    '*',
+    '158.160.21.227',
+    '127.0.0.1',
+    'localhost',
+    'web',
+]
 
 
 # Application definition
@@ -117,7 +123,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'ru-RU'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
 
@@ -165,5 +171,5 @@ AUTH_USER_MODEL = 'users.User'
 CORS_URLS_REGEX = r'^/api/.*$'
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
+    'http://localhost:8000',
 ]
