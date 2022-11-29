@@ -137,4 +137,4 @@ dmypy.json
 #Media
 .png
 .gif
-/static
+static/
