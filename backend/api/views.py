@@ -52,40 +52,37 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    def add_recipes(
-            self, request, serializer_selection):
-        data = {
-            'user': request.user.id,
-            'recipe': int(self.kwargs['pk']),
-        }
-        serializer = serializer_selection(
-            data=data,
-            context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def delete_recipes(
-            self, request, model):
-        user = self.request.user.id
+    def add_or_delete_recipes(
+            self, request, serializer_selection, model):
+        user = request.user.id
         recipe = int(self.kwargs['pk'])
-        data_model = model.objects.filter(
-            user=user,
-            recipe=recipe,
-        )
-        if data_model.exists():
-            data_model.delete()
-            return Response(
-                status=status.HTTP_204_NO_CONTENT)
-        else:
-            return Response(
-                {
-                    'recipe': ['Недопустимый первичный ключ '
-                               f'\"{recipe}\" - объект не существует.']
-                },
-                status=status.HTTP_400_BAD_REQUEST
+        if request.method == 'DELETE':
+            data = {
+                'user': user,
+                'recipe': recipe,
+            }
+            serializer = serializer_selection(
+                data=data,
+                context={'request': request}
             )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+        elif request.method == 'POST':
+            data_model = model.objects.filter(
+                user=user,
+                recipe=recipe,
+            )
+            if data_model.exists():
+                data_model.delete()
+            else:
+                return Response(
+                    {
+                        'recipe': ['Недопустимый первичный ключ '
+                                   f'\"{recipe}\" - объект не существует.']
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=True,
@@ -95,16 +92,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=(permissions.IsAuthenticated,),
     )
     def favorite(self, request, pk=None):
-        if request.method == 'DELETE':
-            return self.delete_recipes(
-                request,
-                Favorite,
-            )
-        elif request.method == 'POST':
-            return self.add_recipes(
-                request,
-                FavoriteSerializer,
-            )
+        return self.add_or_delete_recipes(
+            request,
+            FavoriteSerializer,
+            Favorite,
+        )
 
     @action(
         detail=True,
@@ -114,16 +106,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=(permissions.IsAuthenticated,),
     )
     def shopping_cart(self, request, pk=None):
-        if request.method == 'DELETE':
-            return self.delete_recipes(
-                request,
-                ShoppingList,
-            )
-        elif request.method == 'POST':
-            return self.add_recipes(
-                request,
-                ShoppingListSerializer,
-            )
+        return self.add_or_delete_recipes(
+            request,
+            ShoppingListSerializer,
+            ShoppingList,
+        )
 
     @action(
         detail=False,
