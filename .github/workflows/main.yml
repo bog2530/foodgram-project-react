@@ -57,17 +57,8 @@ jobs:
             script: |
               sudo docker-compose stop
               sudo docker-compose rm -f backend
-              sudo docker image rm ${{ secrets.DOCKER_USERNAME }}/foodgram:v0.1
               sudo docker-container prune -f
               sudo docker-compose up -d
-              echo DB_ENGINE=${{ secrets.DB_ENGINE }} >> .env
-              echo DB_NAME=${{ secrets.DB_NAME }} >> .env
-              echo POSTGRES_USER=${{ secrets.POSTGRES_USER }} >> .env
-              echo POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} >> .env
-              echo DB_HOST=${{ secrets.DB_HOST }} >> .env
-              echo DB_PORT=${{ secrets.DB_PORT }} >> .env
-              sudo docker-compose exec backend python manage.py makemigrations
-              sudo docker-compose exec backend python manage.py migrate
 
 
   send_message:
