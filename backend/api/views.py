@@ -56,7 +56,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             self, request, serializer_selection, model):
         user = request.user.id
         recipe = int(self.kwargs['pk'])
-        if request.method == 'DELETE':
+        if request.method == 'POST':
             data = {
                 'user': user,
                 'recipe': recipe,
@@ -67,7 +67,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             )
             serializer.is_valid(raise_exception=True)
             serializer.save()
-        elif request.method == 'POST':
+        elif request.method == 'DELETE':
             data_model = model.objects.filter(
                 user=user,
                 recipe=recipe,
