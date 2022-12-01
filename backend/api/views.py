@@ -17,7 +17,7 @@ from .serializers import (
     TagSerializer, IngredientSerializer, RecipeCreateSerializer,
     RecipeSerializer, FavoriteSerializer, ShoppingListSerializer
 )
-from .utils import table_ricipes
+from .utils import table_recipes
 from .filter import RecipeFilter, IngredientFilter
 from .permissions import IsOwnerOrReadOnly
 from .paginations import RecipePagination
@@ -28,17 +28,13 @@ User = get_user_model()
 class TagsViewSet(ReadingMixins):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    pagination_class = None
-    permission_classes = (permissions.AllowAny,)
 
 
 class IngredientsViewSet(ReadingMixins):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    pagination_class = None
     filter_backends = (IngredientFilter,)
     search_fields = ('^name',)
-    permission_classes = (permissions.AllowAny,)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -49,46 +45,47 @@ class RecipeViewSet(viewsets.ModelViewSet):
     pagination_class = RecipePagination
 
     def get_serializer_class(self):
-        if self.request.method == 'GET':
+        if self.request.method in permissions.SAFE_METHODS:
             return RecipeSerializer
         return RecipeCreateSerializer
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    def add_ricipes(
-            self, request, serializer_selection, model):
+    def add_recipes(
+            self, request, serializer_selection):
+        data = {
+            'user': request.user.id,
+            'recipe': int(self.kwargs['pk']),
+        }
+        serializer = serializer_selection(
+            data=data,
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def delete_recipes(
+            self, request, model):
         user = self.request.user.id
-        ricipes = int(self.kwargs['pk'])
+        recipe = int(self.kwargs['pk'])
         data_model = model.objects.filter(
             user=user,
-            recipe=ricipes,
+            recipe=recipe,
         )
-        if request.method == 'DELETE':
-            if data_model.exists():
-                data_model.delete()
-            else:
-                return Response(
-                    {'errors': 'Отсутствует рецепт'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        if request.method == 'POST':
-            if data_model.exists():
-                return Response(
-                    {'errors': 'Рецепт уже добавлен'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            serializer = serializer_selection(
-                data={'user': user, 'recipe': ricipes},
-                context={'request': request},
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
+        if data_model.exists():
+            data_model.delete()
             return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED,
+                status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(
+                {
+                    'recipe': ['Недопустимый первичный ключ '
+                               f'\"{recipe}\" - объект не существует.']
+                },
+                status=status.HTTP_400_BAD_REQUEST
             )
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         detail=True,
@@ -98,11 +95,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=(permissions.IsAuthenticated,),
     )
     def favorite(self, request, pk=None):
-        return self.add_ricipes(
-            request,
-            FavoriteSerializer,
-            Favorite,
-        )
+        if request.method == 'DELETE':
+            return self.delete_recipes(
+                request,
+                Favorite,
+            )
+        elif request.method == 'POST':
+            return self.add_recipes(
+                request,
+                FavoriteSerializer,
+            )
 
     @action(
         detail=True,
@@ -112,11 +114,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=(permissions.IsAuthenticated,),
     )
     def shopping_cart(self, request, pk=None):
-        return self.add_ricipes(
-            request,
-            ShoppingListSerializer,
-            ShoppingList,
-        )
+        if request.method == 'DELETE':
+            return self.delete_recipes(
+                request,
+                ShoppingList,
+            )
+        elif request.method == 'POST':
+            return self.add_recipes(
+                request,
+                ShoppingListSerializer,
+            )
 
     @action(
         detail=False,
@@ -133,7 +140,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'ingredient__name',
             'ingredient__measurement_unit'
         ).annotate(Sum('amount'))
-        table = table_ricipes(ingredients)
+        table = table_recipes(ingredients)
         response = HttpResponse(content_type='text/plain')
         response['Content-Disposition'] = f'attachment; filename={filename}'
         response.write(table)

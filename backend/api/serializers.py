@@ -154,6 +154,18 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                 'Время приготовления должно быть больше 0')
         return cooking_time
 
+    def validate_tags(self, tags):
+        tags_list = []
+        if not tags:
+            raise serializers.ValidationError(
+                'Отсутствует тег(и)')
+        for tag in tags:
+            if tag.id in tags_list:
+                raise serializers.ValidationError(
+                    'Теги должны быть уникальны')
+            tags_list.append(tag.id)
+        return tags
+
     def validate_ingredients(self, ingredients):
         ingredients_list = []
         if not ingredients:
@@ -219,6 +231,25 @@ class FavoriteSerializer(serializers.ModelSerializer):
         )
         model = Favorite
 
+    def validate(self, data):
+        request = self.context.get('request')
+        recipe = data['recipe']
+        if not request or request.user.is_anonymous:
+            return False
+        if Favorite.objects.filter(
+            recipe=recipe,
+            user=request.user
+        ).exists():
+            raise serializers.ValidationError(
+                {'errors': 'Рецепт уже добавлен'}
+            )
+        return data
+
+    def delete(self, validated_data):
+        recipe = Favorite.objects.filter(**validated_data)
+        recipe.delete()
+        return recipe
+
     def to_representation(self, instance):
         request = self.context.get('request')
         recipe = get_object_or_404(
@@ -235,3 +266,13 @@ class FavoriteSerializer(serializers.ModelSerializer):
 class ShoppingListSerializer(FavoriteSerializer):
     class Meta(FavoriteSerializer.Meta):
         model = ShoppingList
+
+    def validate(self, data):
+        if ShoppingList.objects.filter(
+            ricipe=data['recipe'],
+            user=data['user']
+        ).exist():
+            raise serializers.ValidationError(
+                {'errors': 'Рецепт уже добавлен'}
+            )
+        return data

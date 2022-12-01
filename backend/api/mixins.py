@@ -1,4 +1,4 @@
-from rest_framework import mixins, viewsets
+from rest_framework import mixins, viewsets, permissions
 
 
 class ReadingMixins(
@@ -6,4 +6,6 @@ class ReadingMixins(
     mixins.RetrieveModelMixin,
     viewsets.GenericViewSet,
 ):
+    pagination_class = None
+    permission_classes = (permissions.AllowAny,)
     pass

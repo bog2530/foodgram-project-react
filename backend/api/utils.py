@@ -1,7 +1,7 @@
 from prettytable import PrettyTable
 
 
-def table_ricipes(ingredients):
+def table_recipes(ingredients):
     table = PrettyTable()
     table.field_names = [
         'Ингридиенты', 'Единицы измерения', 'Количество',
