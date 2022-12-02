@@ -245,11 +245,6 @@ class FavoriteSerializer(serializers.ModelSerializer):
             )
         return data
 
-    def delete(self, validated_data):
-        recipe = Favorite.objects.filter(**validated_data)
-        recipe.delete()
-        return recipe
-
     def to_representation(self, instance):
         request = self.context.get('request')
         recipe = get_object_or_404(
@@ -268,10 +263,14 @@ class ShoppingListSerializer(FavoriteSerializer):
         model = ShoppingList
 
     def validate(self, data):
+        request = self.context.get('request')
+        recipe = data['recipe']
+        if not request or request.user.is_anonymous:
+            return False
         if ShoppingList.objects.filter(
-            ricipe=data['recipe'],
-            user=data['user']
-        ).exist():
+            recipe=recipe,
+            user=request.user
+        ).exists():
             raise serializers.ValidationError(
                 {'errors': 'Рецепт уже добавлен'}
             )

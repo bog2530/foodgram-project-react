@@ -54,32 +54,29 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def add_or_delete_recipes(
             self, request, serializer_selection, model):
-        user = request.user.id
-        recipe = int(self.kwargs['pk'])
+        user = self.request.user.id
+        ricipes = int(self.kwargs['pk'])
         if request.method == 'POST':
-            data = {
-                'user': user,
-                'recipe': recipe,
-            }
             serializer = serializer_selection(
-                data=data,
-                context={'request': request}
+                data={'user': user, 'recipe': ricipes},
+                context={'request': request},
             )
             serializer.is_valid(raise_exception=True)
             serializer.save()
-        elif request.method == 'DELETE':
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED,
+            )
+        if request.method == 'DELETE':
             data_model = model.objects.filter(
                 user=user,
-                recipe=recipe,
+                recipe=ricipes,
             )
             if data_model.exists():
                 data_model.delete()
             else:
                 return Response(
-                    {
-                        'recipe': ['Недопустимый первичный ключ '
-                                   f'\"{recipe}\" - объект не существует.']
-                    },
+                    {'errors': 'Отсутствует рецепт'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
         return Response(status=status.HTTP_204_NO_CONTENT)
