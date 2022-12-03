@@ -5,6 +5,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import (
     viewsets, permissions, status,
 )
+from rest_framework.filters import OrderingFilter
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -34,14 +35,15 @@ class IngredientsViewSet(ReadingMixins):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     filter_backends = (IngredientFilter,)
-    search_fields = ('^name',)
+    search_fields = ('name',)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     permission_classes = (IsOwnerOrReadOnly,)
-    filter_backends = (DjangoFilterBackend,)
+    filter_backends = (DjangoFilterBackend, OrderingFilter)
     filterset_class = RecipeFilter
+    ordering = ('-id',)
     pagination_class = RecipePagination
 
     def get_serializer_class(self):
@@ -128,6 +130,4 @@ class RecipeViewSet(viewsets.ModelViewSet):
         response = HttpResponse(content_type='text/plain')
         response['Content-Disposition'] = f'attachment; filename={filename}'
         response.write(table)
-        data_model = ShoppingList.objects.filter(user=user.id)
-        data_model.delete()
         return response

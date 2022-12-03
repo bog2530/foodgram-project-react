@@ -8,4 +8,3 @@ class ReadingMixins(
 ):
     pagination_class = None
     permission_classes = (permissions.AllowAny,)
-    pass
